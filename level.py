@@ -6,16 +6,16 @@ import numpy as np
 import pandas as pd
 
 
-def make_room(i, j):
-    v_padding = randint(0, GRID_ROW_HEIGHT - 2 - MIN_ROOM_HEIGHT)
-    h_padding = randint(0, GRID_COL_WIDTH - 2 - MIN_ROOM_WIDTH)
-    h = GRID_ROW_HEIGHT - v_padding
-    w = GRID_COL_WIDTH - h_padding
-    top_padding = randint(0, v_padding)
-    left_padding = randint(0, h_padding)
-    y = i * GRID_ROW_HEIGHT + i + top_padding
-    x = j * GRID_COL_WIDTH + j + left_padding
-    return y, x, h, w
+# def make_room(i, j):
+#     v_padding = randint(0, GRID_ROW_HEIGHT - 2 - MIN_ROOM_HEIGHT)
+#     h_padding = randint(0, GRID_COL_WIDTH - 2 - MIN_ROOM_WIDTH)
+#     h = GRID_ROW_HEIGHT - v_padding
+#     w = GRID_COL_WIDTH - h_padding
+#     top_padding = randint(0, v_padding)
+#     left_padding = randint(0, h_padding)
+#     y = i * GRID_ROW_HEIGHT + i + top_padding
+#     x = j * GRID_COL_WIDTH + j + left_padding
+#     return y, x, h, w
 
 
 def draw_rooms(rooms, map):
@@ -69,27 +69,80 @@ def draw_passage(y0, x0, y1, x1, map):
         x += s
 
 
-counter = 0
+# counter = 0
 
 
-def make_level():
-    global counter
-    map = np.full(
-        (ROWS - 1, COLS), SPACE, dtype=np.int8
-    )  # stealing name of a built-in function
-    rooms = [make_room(i, j) for i in range(GRID_ROWS) for j in range(GRID_COLS)]
-    draw_rooms(rooms, map)
-    for i, j in [(0, 1), (1, 2), (3, 4), (4, 5), (6, 7), (7, 8)]:
-        draw_horiz_passage(i, j, rooms, map)
-    for i, j in [(0, 3), (1, 4), (2, 5), (3, 6), (4, 7), (5, 8)]:
-        draw_vert_passage(i, j, rooms, map)
+# def make_level():
+#     global counter
+#     map = np.full(
+#         (ROWS - 1, COLS), SPACE, dtype=np.int8
+#     )  # stealing name of a built-in function
+#     rooms = [make_room(i, j) for i in range(GRID_ROWS) for j in range(GRID_COLS)]
+#     draw_rooms(rooms, map)
+#     for i, j in [(0, 1), (1, 2), (3, 4), (4, 5), (6, 7), (7, 8)]:
+#         draw_horiz_passage(i, j, rooms, map)
+#     for i, j in [(0, 3), (1, 4), (2, 5), (3, 6), (4, 7), (5, 8)]:
+#         draw_vert_passage(i, j, rooms, map)
 
-    monsters = []
-    for y, x, h, w in rooms:
-        monster_type = random.choice(monster_types)
-        hp = monster_type["level"] * randint(1, 8)
-        pos = (y + randint(1, h - 2), x + randint(1, w - 2))
-        monster: Monster = dict(**monster_type, id=counter, hp=hp, max_hp=hp, pos=pos)
-        counter += 1
-        monsters.append(monster)
-    return rooms, map, pd.DataFrame(monsters)
+#     monsters = []
+#     for y, x, h, w in rooms:
+#         monster_type = random.choice(monster_types)
+#         hp = monster_type["level"] * randint(1, 8)
+#         monster: Monster = dict(
+#             **monster_type,
+#             id=counter,
+#             hp=hp,
+#             max_hp=hp,
+#             y=y + randint(1, h - 2),
+#             x=x + randint(1, w - 2)
+#         )
+#         counter += 1
+#         monsters.append(monster)
+#     return rooms, map, pd.DataFrame(monsters)
+
+
+class Level:
+    def __init__(self, rng):
+        self.rng = rng
+        self.counter = 0
+        self.map = np.full(
+            (ROWS - 1, COLS), SPACE, dtype=np.int8
+        )  # stealing name of a built-in function
+        self.rooms = [
+            self.make_room(i, j) for i in range(GRID_ROWS) for j in range(GRID_COLS)
+        ]
+        draw_rooms(self.rooms, self.map)
+        for i, j in [(0, 1), (1, 2), (3, 4), (4, 5), (6, 7), (7, 8)]:
+            draw_horiz_passage(i, j, self.rooms, self.map)
+        for i, j in [(0, 3), (1, 4), (2, 5), (3, 6), (4, 7), (5, 8)]:
+            draw_vert_passage(i, j, self.rooms, self.map)
+        monsters = []
+        for y, x, h, w in self.rooms:
+            monster_type = random.choice(monster_types)
+            hp = monster_type["level"] * randint(1, 8)
+            monster: Monster = dict(
+                **monster_type,
+                id=self.counter,
+                hp=hp,
+                max_hp=hp,
+                y=y + randint(1, h - 2),
+                x=x + randint(1, w - 2)
+            )
+            self.counter += 1
+            monsters.append(monster)
+        self.monsters = pd.DataFrame(monsters)
+
+    def make_room(self, i, j):
+        v_padding = self.rng.integers(
+            0, GRID_ROW_HEIGHT - 2 - MIN_ROOM_HEIGHT, endpoint=True, dtype=int
+        )
+        h_padding = self.rng.integers(
+            0, GRID_COL_WIDTH - 2 - MIN_ROOM_WIDTH, endpoint=True, dtype=int
+        )
+        h = GRID_ROW_HEIGHT - v_padding
+        w = GRID_COL_WIDTH - h_padding
+        top_padding = self.rng.integers(0, v_padding, endpoint=True, dtype=int)
+        left_padding = self.rng.integers(0, h_padding, endpoint=True, dtype=int)
+        y = i * GRID_ROW_HEIGHT + i + top_padding
+        x = j * GRID_COL_WIDTH + j + left_padding
+        return y, x, h, w

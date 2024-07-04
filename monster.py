@@ -23,7 +23,8 @@ class Monster(MonsterType):
     id: int
     max_hp: int
     hp: int
-    pos: Tuple[int, int]
+    y: int
+    x: int
 
 
 monster_types: List[MonsterType] = [
