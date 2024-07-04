@@ -1,0 +1,16 @@
+ROWS = 24
+COLS = 80
+GRID_ROWS = 3
+GRID_COLS = 3
+GRID_ROW_HEIGHT = 7
+GRID_COL_WIDTH = 26
+MIN_ROOM_HEIGHT = 2
+MIN_ROOM_WIDTH = 2
+WALKABLE = (35, 43, 46)  # (ord("#"), ord("+"), ord("."))
+SPACE = 32  # ord(" ")
+STRUDEL = 64  # ord("@")
+HASH = 35  # ord("#")
+PLUS = 43  # ord("+")
+DOT = 46  # ord(".")
+PIPE = 124  # ord("|")
+DASH = 45  # ord("-")
