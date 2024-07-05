@@ -1,4 +1,4 @@
-from typing import List, Literal, Tuple, TypedDict
+from typing import List, Literal, TypedDict
 
 
 class MonsterType(TypedDict):
@@ -25,6 +25,8 @@ class Monster(MonsterType):
     hp: int
     y: int
     x: int
+    curroom: int
+    status: Literal["idle"] | Literal["chase"]
 
 
 monster_types: List[MonsterType] = [
