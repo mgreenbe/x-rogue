@@ -66,6 +66,19 @@ def take_action(stdscr):
                 c = stdscr.getch()
                 logger.info(f"c = {c}")
             queue_up(A.DISPLAY_MESSAGES, payload=payload)
+        # ----------------------------------------------------------------------HELP_KEY
+        case A.HELP_KEY:
+            c = stdscr.getch()
+            match c:
+                case C.h:
+                    s.message_queue.put("h       left")
+                case C.j:
+                    s.message_queue.put("j       down")
+                case C.k:
+                    s.message_queue.put("k       up")
+                case C.l:
+                    s.message_queue.put("l       right")
+            queue_up(A.GET_COMMAND)
         # -------------------------------------------------------------------GET_COMMAND
         case A.GET_COMMAND:
             clear_message_on_next_paint()
@@ -86,6 +99,9 @@ def take_action(stdscr):
                         queue_up(A.GET_COMMAND, payload=payload)
                     case C.SPACE:
                         queue_up(A.GET_COMMAND)
+                    case C.QUESTION:
+                        s.message = "Character you want help for (* for all): "
+                        queue_up(A.HELP_KEY)
                     case (
                         C.TWO
                         | C.THREE

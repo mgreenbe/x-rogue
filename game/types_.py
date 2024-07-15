@@ -15,6 +15,7 @@ A = Enum(
         "PROMPT_FOR_NEXT_MESSAGE",
         "ROGUE_TURN",
         "LAST_MESSAGE",
+        "HELP_KEY",
     ],
 )
 
@@ -49,6 +50,7 @@ class C(IntEnum):
     SEVEN = 55
     EIGHT = 56
     NINE = 57
+    QUESTION = 63
     Q = 81
     b = 98
     h = 104
