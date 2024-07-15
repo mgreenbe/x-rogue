@@ -13,9 +13,10 @@ def paint_screen(stdscr):
         stdscr.addstr(0, 0, s.message)
         stdscr.clrtoeol()
 
-    for yx in s.items[:, ICOL.POS].compressed():
-        y, x = yx >> 8, yx & 255
-        stdscr.addch(y + 1, x, "*")
+    active_items = s.items[s.items[:, ICOL.IS_ACTIVE] == 1]
+    for symbol, pos in active_items[:, [ICOL.SYMBOL, ICOL.POS]]:
+        y, x = pos >> 8, pos & 255
+        stdscr.addch(y + 1, x, chr(symbol))
 
     pos = s.rogue["pos"]
     y, x = pos >> 8, pos & 255

@@ -18,8 +18,9 @@ A = Enum(
     ],
 )
 
+
 # Directions
-D = Enum("DIR", ["S", "N", "W", "E"])
+D = Enum("DIR", ["S", "N", "W", "E", "SW", "SE", "NW", "NE"])
 
 # ITEMS
 I = IntEnum("Item", ["ARMOR", "WEAPON", "SCROLL", "POTION", "GOLD", "FOOD"])
@@ -28,15 +29,18 @@ I = IntEnum("Item", ["ARMOR", "WEAPON", "SCROLL", "POTION", "GOLD", "FOOD"])
 # Item matrix columns
 class ICOL(IntEnum):
     TYPE = 0
-    SYMBOL = 1
-    GOLD = 2
-    POS = 3
+    SUBTYPE = 1
+    SYMBOL = 2
+    QUANTITY = 3
+    POS = 4
+    IS_ACTIVE = 5
 
 
 # Commands
 class C(IntEnum):
     CTRL_C = 3
     CTRL_P = 16
+    SPACE = 32
     TWO = 50
     THREE = 51
     FOUR = 52
@@ -46,6 +50,14 @@ class C(IntEnum):
     EIGHT = 56
     NINE = 57
     Q = 81
+    b = 98
+    h = 104
+    j = 106
+    k = 107
+    l = 108
+    n = 110
+    u = 117
+    y = 121
     DOWN = 258
     UP = 259
     LEFT = 260

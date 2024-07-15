@@ -3,7 +3,8 @@ from typing import List, Literal, TypedDict
 
 class MonsterType(TypedDict):
     type: (
-        Literal["kestrel"]
+        Literal["player"]
+        | Literal["kestrel"]
         | Literal["emu"]
         | Literal["snake"]
         | Literal["bat"]

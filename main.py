@@ -28,6 +28,7 @@ def main(stdscr):
     mapwin = curses.newwin(
         ROWS, COLS
     )  # map only takes up first 23 rows, curses issue with bottom right character of window
+    statuswin = curses.newwin(1, COLS, 23, 0)
 
     rng = np.random.default_rng()
     level.init(rng)
@@ -64,13 +65,15 @@ def main(stdscr):
         masked_map[hero.y, hero.x] = STRUDEL
 
         mapwin.addstr(0, 0, masked_map.tobytes())
+        statuswin.addstr(0, 0, "Hi, mom!")
         stdscr.refresh()
         mapwin.refresh()
+        statuswin.refresh()
 
         if turn % 2 == 0:
             for i, monster in level.monsters.iterrows():
                 if monster.status == "chase":
-                    bestdist = ROWS + COLS
+                    bestdist = ROWS**2 + COLS**2
                     for dy, dx in [
                         (-1, -1),
                         (-1, 0),
@@ -82,9 +85,9 @@ def main(stdscr):
                         (1, 0),
                         (1, 1),
                     ]:
-                        curdist = np.abs(monster.y + dy - hero.y) + np.abs(
+                        curdist = (monster.y + dy - hero.y) ** 2 + (
                             monster.x + dx - hero.x
-                        )
+                        ) ** 2
                         if (
                             curdist < bestdist
                             and level.map[monster.y + dy, monster.x + dx] in WALKABLE

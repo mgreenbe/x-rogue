@@ -21,4 +21,4 @@ rogue = {
     "exp_level": 1,
     "exp_points": 0,
 }
-items = ma.masked_all((100, len(ICOL)), dtype=int)
+items = np.zeros((100, len(ICOL)), dtype=int)

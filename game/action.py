@@ -2,8 +2,9 @@ import logging
 import state as s
 from queue import PriorityQueue
 from types_ import A, C, D, I, K, ICOL
-import numpy.ma as ma
 import numpy as np
+from constants import POSITIONS, POTIONS
+from randomized import potion_colors
 
 logger = logging.getLogger()
 
@@ -12,7 +13,7 @@ action_queue.put((-1, A.NEXT_LEVEL, None))
 action_queue.put((0, A.GET_COMMAND, None))
 
 
-def clear_message():
+def clear_message_on_next_paint():
     if s.message != None:
         s.previous_message = s.message
     s.message = None
@@ -35,14 +36,19 @@ def take_action(stdscr):
         # --------------------------------------------------------------------NEXT_LEVEL
         case A.NEXT_LEVEL:
             s.level += 1
-            s.items[:] = ma.masked
-            n = 50
+            s.items[:] = 0
+            n = 40
             s.items[:n, ICOL.TYPE] = I.GOLD
+            s.items[n : 2 * n, ICOL.TYPE] = I.POTION
+            s.items[n : 2 * n, ICOL.SUBTYPE] = s.rng.choice(len(POTIONS), size=n)
             s.items[:n, ICOL.SYMBOL] = ord("*")
-            s.items[:n, ICOL.GOLD] = s.rng.integers(10, 100, size=n)
-            s.items[:n, ICOL.POS] = (s.rng.integers(23, size=n) << 8) + s.rng.integers(
-                80, size=n
+            s.items[n : 2 * n, ICOL.SYMBOL] = ord("?")
+            s.items[:n, ICOL.QUANTITY] = s.rng.integers(10, 100, size=n)
+            s.items[: 2 * n, ICOL.IS_ACTIVE] = 1
+            s.items[: 2 * n, ICOL.POS] = s.rng.choice(
+                POSITIONS, size=2 * n, replace=False
             )
+
         # --------------------------------------------------------------DISPLAY_MESSAGES
         case A.DISPLAY_MESSAGES:
             message = s.message_queue.get()
@@ -62,6 +68,7 @@ def take_action(stdscr):
             queue_up(A.DISPLAY_MESSAGES, payload=payload)
         # -------------------------------------------------------------------GET_COMMAND
         case A.GET_COMMAND:
+            clear_message_on_next_paint()
             if not s.message_queue.empty():  # display messages in queue
                 queue_up(A.DISPLAY_MESSAGES, payload=payload)
             else:
@@ -77,6 +84,8 @@ def take_action(stdscr):
                     case C.CTRL_P:
                         s.message = s.previous_message
                         queue_up(A.GET_COMMAND, payload=payload)
+                    case C.SPACE:
+                        queue_up(A.GET_COMMAND)
                     case (
                         C.TWO
                         | C.THREE
@@ -89,14 +98,48 @@ def take_action(stdscr):
                     ):
                         logger.info(f"Next command will be repeated {c - 48} times.")
                         queue_up(A.GET_COMMAND, payload={"reps": c - 48})
-                    case C.DOWN | C.UP | C.LEFT | C.RIGHT:
+                    case C.DOWN | C.j:
                         queue_up(
                             A.MOVE_ROGUE,
-                            payload={"dir": D(c - 257), "reps": reps},
+                            payload={"dir": D.S, "reps": reps},
+                        )
+                    case C.UP | C.k:
+                        queue_up(
+                            A.MOVE_ROGUE,
+                            payload={"dir": D.N, "reps": reps},
+                        )
+                    case C.LEFT | C.h:
+                        queue_up(
+                            A.MOVE_ROGUE,
+                            payload={"dir": D.W, "reps": reps},
+                        )
+                    case C.RIGHT | C.l:
+                        queue_up(
+                            A.MOVE_ROGUE,
+                            payload={"dir": D.E, "reps": reps},
+                        )
+                    case C.b:
+                        queue_up(
+                            A.MOVE_ROGUE,
+                            payload={"dir": D.SW, "reps": reps},
+                        )
+                    case C.n:
+                        queue_up(
+                            A.MOVE_ROGUE,
+                            payload={"dir": D.SE, "reps": reps},
+                        )
+                    case C.y:
+                        queue_up(
+                            A.MOVE_ROGUE,
+                            payload={"dir": D.NW, "reps": reps},
+                        )
+                    case C.u:
+                        queue_up(
+                            A.MOVE_ROGUE,
+                            payload={"dir": D.NE, "reps": reps},
                         )
         # --------------------------------------------------------------------MOVE_ROGUE
         case A.MOVE_ROGUE:
-            clear_message()
             if payload is not None:
                 reps = 1 if payload is None else payload["reps"]
             pos = s.rogue["pos"]
@@ -110,6 +153,18 @@ def take_action(stdscr):
                     x -= 1
                 case D.E:
                     x += 1
+                case D.SW:
+                    x -= 1
+                    y += 1
+                case D.SE:
+                    x += 1
+                    y += 1
+                case D.NW:
+                    x -= 1
+                    y -= 1
+                case D.NE:
+                    x += 1
+                    y -= 1
             pos = (y << 8) + x
             s.rogue["pos"] = pos
             pick_up = pos in s.items[:, ICOL.POS]
@@ -127,18 +182,26 @@ def take_action(stdscr):
         # -----------------------------------------------------------------------PICK_UP
         case A.PICK_UP:
             pos = s.rogue["pos"]
+            assert np.sum(s.items[:, ICOL.POS] == pos) == 1
             i = np.argmax(s.items[:, ICOL.POS] == pos)
             assert s.items[i, ICOL.POS] == pos
-            gold = s.items[i, ICOL.GOLD]
-            s.rogue["gold"] += gold
-            s.items[i] = ma.masked
-            s.message_queue.put(f"You found {gold} gold pieces.")
+            match s.items[i, ICOL.TYPE]:
+                case I.GOLD:
+                    gold = s.items[i, ICOL.QUANTITY]
+                    s.rogue["gold"] += gold
+                    s.message_queue.put(f"You found {gold} gold pieces.")
+                case I.POTION:
+                    color = potion_colors[s.items[i, ICOL.SUBTYPE]]
+                    article = "an" if color[0] in "aeiou" else "a"
+                    s.message_queue.put(f"You found {article} {color} potion.")
+                    # TODO: Inventory!
+            s.items[i, ICOL.IS_ACTIVE] = 0
         # ------------------------------------------------------------------CONFIRM_QUIT
         case A.CONFIRM_QUIT:
+            clear_message_on_next_paint()
             c = stdscr.getch()
             logger.info(f"c = {c}")
             if c == K.Y or c == K.y:
-                return True
+                return True  # done, break out of game loop
             else:
-                clear_message()
                 queue_up(A.GET_COMMAND)
